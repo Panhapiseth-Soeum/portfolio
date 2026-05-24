@@ -5,12 +5,14 @@ import {
   aboutQuery,
   projectsQuery,
   skillsQuery,
+  certificatesQuery,
 } from "@/sanity/queries";
-import type { SiteSettings, Hero, About, Project, Skill } from "@/types/sanity";
+import type { SiteSettings, Hero, About, Project, Skill, Certificate } from "@/types/sanity";
 import HeroSection from "@/components/sections/HeroSection";
 import AboutSection from "@/components/sections/AboutSection";
 import ProjectsSection from "@/components/sections/ProjectsSection";
 import SkillsSection from "@/components/sections/SkillsSection";
+import CertificatesSection from "@/components/sections/CertificatesSection";
 import ContactSection from "@/components/sections/ContactSection";
 
 async function getData() {
@@ -21,10 +23,11 @@ async function getData() {
       about: null,
       projects: null,
       skills: null,
+      certificates: null,
     };
   }
   try {
-    const [siteSettings, hero, about, projects, skills] = await Promise.all([
+    const [siteSettings, hero, about, projects, skills, certificates] = await Promise.all([
       sanityFetch<SiteSettings | null>({
         query: siteSettingsQuery,
         tags: ["siteSettings"],
@@ -36,8 +39,9 @@ async function getData() {
         tags: ["project"],
       }),
       sanityFetch<Skill[] | null>({ query: skillsQuery, tags: ["skill"] }),
+      sanityFetch<Certificate[] | null>({ query: certificatesQuery, tags: ["certificate"] }),
     ]);
-    return { siteSettings, hero, about, projects, skills };
+    return { siteSettings, hero, about, projects, skills, certificates };
   } catch {
     return {
       siteSettings: null,
@@ -45,12 +49,13 @@ async function getData() {
       about: null,
       projects: null,
       skills: null,
+      certificates: null,
     };
   }
 }
 
 export default async function HomePage() {
-  const { siteSettings, hero, about, projects, skills } = await getData();
+  const { siteSettings, hero, about, projects, skills, certificates } = await getData();
 
   return (
     <>
@@ -58,6 +63,7 @@ export default async function HomePage() {
       <AboutSection about={about} />
       <ProjectsSection projects={projects} />
       <SkillsSection skills={skills} />
+      <CertificatesSection certificates={certificates} />
       <ContactSection socialLinks={siteSettings?.socialLinks} />
     </>
   );

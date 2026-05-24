@@ -52,3 +52,14 @@ export const skillsQuery = `*[_type == "skill"] | order(order asc) {
   icon,
   order
 }`;
+
+export const certificatesQuery = `*[_type == "certificate"] | order(order asc) {
+  _id,
+  title,
+  issuer,
+  date,
+  image,
+  "fileUrl": file.asset->url,
+  credentialUrl,
+  order
+}`;

@@ -56,6 +56,17 @@ export interface Project {
   result?: PortableTextBlock[];
 }
 
+export interface Certificate {
+  _id: string;
+  title: string;
+  issuer: string;
+  date?: string;
+  image?: SanityImage;
+  fileUrl?: string;
+  credentialUrl?: string;
+  order: number;
+}
+
 export interface Skill {
   _id: string;
   name: string;
