@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter, Space_Grotesk, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import { Analytics } from "@vercel/analytics/next";
 import { ThemeProvider } from "@/components/layout/ThemeProvider";
 import { sanityFetch } from "@/sanity/fetch";
 import { siteSettingsQuery } from "@/sanity/queries";
@@ -75,6 +76,7 @@ export default async function RootLayout({
             siteTitle={settings?.title || "Portfolio"}
             socialLinks={settings?.socialLinks}
           />
+          <Analytics />
         </ThemeProvider>
       </body>
     </html>
