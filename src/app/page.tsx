@@ -61,7 +61,7 @@ export default async function HomePage() {
     <>
       <HeroSection hero={hero} />
       <AboutSection about={about} />
-      <ProjectsSection projects={projects} />
+      <ProjectsSection projects={projects} isLoading={false} />
       <SkillsSection skills={skills} />
       <CertificatesSection certificates={certificates} />
       <ContactSection socialLinks={siteSettings?.socialLinks} />

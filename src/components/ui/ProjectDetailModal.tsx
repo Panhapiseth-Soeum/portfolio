@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { X, ExternalLink, FolderGit } from "lucide-react";
 import SanityImage from "@/components/shared/SanityImage";
 import PortableTextRenderer from "@/components/shared/PortableTextRenderer";
+import ImageCarousel from "@/components/ui/ImageCarousel";
 import Badge from "@/components/ui/Badge";
 import Button from "@/components/ui/Button";
 import type { Project } from "@/types/sanity";
@@ -162,22 +163,10 @@ export default function ProjectDetailModal({
               )}
 
               {project.screenshots && project.screenshots.length > 0 && (
-                <div className="grid grid-cols-2 gap-3">
-                  {project.screenshots.map((shot, i) => (
-                    <div
-                      key={i}
-                      className="relative aspect-video overflow-hidden rounded-xl border border-[var(--border-color)]"
-                    >
-                      <SanityImage
-                        image={shot}
-                        alt={`${project.title} screenshot ${i + 1}`}
-                        fill
-                        className="object-cover"
-                        sizes="(max-width: 768px) 50vw, 380px"
-                      />
-                    </div>
-                  ))}
-                </div>
+                <ImageCarousel
+                  images={project.screenshots}
+                  title={project.title}
+                />
               )}
 
               <div className="flex gap-3">
