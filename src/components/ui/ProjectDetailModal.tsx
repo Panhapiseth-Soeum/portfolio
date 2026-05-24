@@ -9,6 +9,31 @@ import Badge from "@/components/ui/Badge";
 import Button from "@/components/ui/Button";
 import type { Project } from "@/types/sanity";
 
+function getEmbedUrl(url: string): string | null {
+  try {
+    const parsed = new URL(url);
+    // YouTube
+    if (parsed.hostname.includes("youtube.com") || parsed.hostname.includes("youtu.be")) {
+      const videoId = parsed.hostname.includes("youtu.be")
+        ? parsed.pathname.slice(1)
+        : parsed.searchParams.get("v");
+      if (videoId) return `https://www.youtube.com/embed/${videoId}`;
+    }
+    // Vimeo
+    if (parsed.hostname.includes("vimeo.com")) {
+      const videoId = parsed.pathname.split("/").pop();
+      if (videoId && /^\d+$/.test(videoId)) return `https://player.vimeo.com/video/${videoId}`;
+    }
+    // Loom
+    if (parsed.hostname.includes("loom.com")) {
+      const parts = parsed.pathname.split("/");
+      const shareId = parts[parts.length - 1] || parts[parts.length - 2];
+      if (shareId) return `https://www.loom.com/embed/${shareId}`;
+    }
+  } catch {}
+  return null;
+}
+
 interface ProjectDetailModalProps {
   project: Project | null;
   onClose: () => void;
@@ -66,7 +91,17 @@ export default function ProjectDetailModal({
               <X className="h-4 w-4" />
             </button>
 
-            {project.coverImage && (
+            {project.videoUrl && getEmbedUrl(project.videoUrl) ? (
+              <div className="relative aspect-video w-full overflow-hidden rounded-t-2xl bg-black">
+                <iframe
+                  src={getEmbedUrl(project.videoUrl)!}
+                  title={`${project.title} demo video`}
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                  className="absolute inset-0 h-full w-full"
+                />
+              </div>
+            ) : project.coverImage ? (
               <div className="relative aspect-video w-full overflow-hidden rounded-t-2xl">
                 <SanityImage
                   image={project.coverImage}
@@ -77,7 +112,7 @@ export default function ProjectDetailModal({
                   sizes="(max-width: 768px) 100vw, 800px"
                 />
               </div>
-            )}
+            ) : null}
 
             <div className="flex flex-col gap-6 p-6 sm:p-8">
               <div>

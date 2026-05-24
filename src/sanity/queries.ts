@@ -38,6 +38,7 @@ export const projectsQuery = `*[_type == "project"] | order(order asc) {
   technologies,
   liveUrl,
   sourceUrl,
+  videoUrl,
   featured,
   order,
   problem,

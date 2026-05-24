@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Play } from "lucide-react";
 import { SECTION_IDS } from "@/lib/constants";
 import SectionHeading from "@/components/ui/SectionHeading";
 import { BentoGrid, BentoCard } from "@/components/ui/BentoGrid";
@@ -46,6 +47,13 @@ export default function ProjectsSection({ projects }: ProjectsSectionProps) {
                         sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                       />
                       <div className="absolute inset-0 bg-black/0 transition-colors group-hover:bg-black/20" />
+                      {project.videoUrl && (
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <span className="flex h-12 w-12 items-center justify-center rounded-full bg-accent/90 text-white shadow-lg transition-transform group-hover:scale-110">
+                            <Play className="ml-0.5 h-5 w-5" />
+                          </span>
+                        </div>
+                      )}
                     </div>
                   )}
 

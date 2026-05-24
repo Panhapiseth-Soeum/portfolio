@@ -49,6 +49,7 @@ export interface Project {
   technologies?: string[];
   liveUrl?: string;
   sourceUrl?: string;
+  videoUrl?: string;
   featured: boolean;
   order: number;
   problem?: PortableTextBlock[];

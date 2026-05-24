@@ -47,6 +47,12 @@ export default defineType({
     defineField({ name: "liveUrl", title: "Live Demo URL", type: "url" }),
     defineField({ name: "sourceUrl", title: "Source Code URL", type: "url" }),
     defineField({
+      name: "videoUrl",
+      title: "Demo / Explainer Video URL",
+      type: "url",
+      description: "YouTube, Vimeo, or Loom video URL. Shown in the project detail modal.",
+    }),
+    defineField({
       name: "featured",
       title: "Featured Project",
       type: "boolean",
