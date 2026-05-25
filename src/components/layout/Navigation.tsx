@@ -18,8 +18,6 @@ export default function Navigation({ siteTitle, navItems }: NavigationProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [activeSection, setActiveSection] = useState("");
 
-  if (pathname.startsWith("/studio")) return null;
-
   useEffect(() => {
     const onScroll = () => setIsScrolled(window.scrollY > 20);
     window.addEventListener("scroll", onScroll, { passive: true });
@@ -51,6 +49,8 @@ export default function Navigation({ siteTitle, navItems }: NavigationProps) {
 
     return () => observer.disconnect();
   }, [navItems]);
+
+  if (pathname.startsWith("/studio")) return null;
 
   return (
     <header

@@ -10,8 +10,6 @@ export default function ScrollToTop() {
   const [visible, setVisible] = useState(false);
   const prefersReducedMotion = useReducedMotion() ?? false;
 
-  if (pathname.startsWith("/studio")) return null;
-
   useEffect(() => {
     const hero = document.getElementById("hero");
     if (!hero) return;
@@ -33,6 +31,8 @@ export default function ScrollToTop() {
       behavior: prefersReducedMotion ? "auto" : "smooth",
     });
   };
+
+  if (pathname.startsWith("/studio")) return null;
 
   return (
     <AnimatePresence>
