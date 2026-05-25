@@ -4,6 +4,7 @@ import { useRef, useMemo, useState, useEffect } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { AdaptiveDpr } from "@react-three/drei";
 import { EffectComposer, Bloom } from "@react-three/postprocessing";
+import { Constellation } from "@/components/three/Constellation";
 import * as THREE from "three";
 
 /* ------------------------------------------------------------------ */
@@ -124,10 +125,10 @@ function useStarTexture() {
 /*  Multi-layer starfield                                              */
 /* ------------------------------------------------------------------ */
 const STAR_LAYERS = [
-  { count: 4000, size: 0.015, color: "#b0c4de", opacity: 0.5, speed: 0.008, distance: 7 },
-  { count: 1500, size: 0.03, color: "#d4e4f7", opacity: 0.6, speed: 0.015, distance: 6 },
-  { count: 400, size: 0.06, color: "#ffffff", opacity: 0.75, speed: 0.022, distance: 5 },
-  { count: 40, size: 0.12, color: "#ffffff", opacity: 0.9, speed: 0.03, distance: 4.5 },
+  { count: 2200, size: 0.016, color: "#b0c4de", opacity: 0.5, speed: 0.008, distance: 7 },
+  { count: 900, size: 0.032, color: "#d4e4f7", opacity: 0.6, speed: 0.015, distance: 6 },
+  { count: 250, size: 0.065, color: "#ffffff", opacity: 0.75, speed: 0.022, distance: 5 },
+  { count: 35, size: 0.14, color: "#ffffff", opacity: 0.9, speed: 0.03, distance: 4.5 },
 ];
 
 function StarLayer({ count, size, color, opacity: baseOpacity, speed, distance }: typeof STAR_LAYERS[number]) {
@@ -196,12 +197,12 @@ function CentralShape() {
   const coreRef = useRef<THREE.Mesh>(null);
 
   const geo = useMemo(
-    () => new THREE.TorusKnotGeometry(0.7, 0.15, 128, 16),
+    () => new THREE.TorusKnotGeometry(0.7, 0.15, 96, 12),
     []
   );
 
   const wireframeEdges = useMemo(
-    () => new THREE.EdgesGeometry(geo, 15),
+    () => new THREE.EdgesGeometry(geo, 30),
     [geo]
   );
 
@@ -277,7 +278,7 @@ function OrbitalRing({
   const ringRef = useRef<THREE.Mesh>(null);
 
   const torusGeo = useMemo(
-    () => new THREE.TorusGeometry(radius, tube, 64, 128),
+    () => new THREE.TorusGeometry(radius, tube, 32, 64),
     [radius, tube]
   );
 
@@ -442,7 +443,7 @@ interface Explosion {
   age: number;
 }
 
-const EXPLOSION_PARTICLE_COUNT = 50;
+const EXPLOSION_PARTICLE_COUNT = 25;
 const EXPLOSION_LIFETIME = 1.5;
 
 function StarExplosions({
@@ -542,7 +543,7 @@ function Planet() {
     []
   );
   const edgeGeo = useMemo(
-    () => new THREE.EdgesGeometry(icosaGeo, 20),
+    () => new THREE.EdgesGeometry(icosaGeo, 30),
     [icosaGeo]
   );
 
@@ -697,37 +698,27 @@ export default function UniverseScene() {
     setExplosions((prev) => [...prev.slice(-5), exp]);
   };
 
-  if (isLight) return null;
-
   return (
     <Canvas
+      style={{ position: "absolute", inset: 0 }}
       camera={{ position: [0, 0, 5], fov: 55 }}
-      dpr={[1, 2]}
+      dpr={[1, 1.25]}
       gl={{
         antialias: false,
         alpha: true,
         powerPreference: "high-performance",
       }}
-      style={{ position: "absolute", inset: 0 }}
     >
       <AdaptiveDpr pixelated />
-      <color attach="background" args={["#080C28"]} />
 
-      {/* Nebula clouds */}
-      <Nebula color="#06b6d4" position={[1.5, 0.8, -2]} rotationSpeed={0.08} scale={3} opacity={0.015} />
-      <Nebula color="#a855f7" position={[-1.8, -0.5, -2.5]} rotationSpeed={-0.06} scale={2.5} opacity={0.015} />
-      <Nebula color="#22d3ee" position={[0.3, -1.2, -2]} rotationSpeed={0.05} scale={2.8} opacity={0.015} />
+      {/* Dark mode scene */}
+      <group visible={!isLight}>
+        <color attach="background" args={["#080C28"]} />
 
-      {/* Invisible click catcher — transparent so raycasting works */}
-      <mesh
-        onClick={handleClick}
-        position={[0, 0, -0.5]}
-      >
-        <planeGeometry args={[20, 12]} />
-        <meshBasicMaterial
-          transparent
-          opacity={0}
-          depthWrite={false}
+        {/* Invisible click catcher */}
+        <mesh onClick={handleClick} position={[0, 0, -0.5]}>
+          <planeGeometry args={[20, 12]} />
+          <meshBasicMaterial transparent opacity={0} depthWrite={false}
           depthTest={false}
         />
       </mesh>
@@ -746,9 +737,15 @@ export default function UniverseScene() {
           intensity={0.15}
           luminanceThreshold={0.5}
           luminanceSmoothing={0.9}
-          mipmapBlur
+          resolutionScale={0.5}
         />
       </EffectComposer>
+      </group>
+
+      {/* Light mode constellation */}
+      <group visible={isLight}>
+        <Constellation />
+      </group>
     </Canvas>
   );
 }

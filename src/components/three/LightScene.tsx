@@ -301,8 +301,6 @@ export default function LightScene() {
     return () => obs.disconnect();
   }, []);
 
-  if (isDark) return null;
-
   return (
     <Canvas
       camera={{ position: [0, 0, 5], fov: 55 }}
@@ -312,7 +310,7 @@ export default function LightScene() {
         alpha: true,
         powerPreference: "high-performance",
       }}
-      style={{ position: "absolute", inset: 0 }}
+      style={{ position: "absolute", inset: 0, visibility: isDark ? "hidden" : "visible" }}
     >
       <AdaptiveDpr pixelated />
       <Constellation />

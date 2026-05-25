@@ -4,7 +4,7 @@ import { ArrowDown } from "lucide-react";
 import { SECTION_IDS } from "@/lib/constants";
 import Button from "@/components/ui/Button";
 import ScrollReveal from "@/components/ui/ScrollReveal";
-import { LazyUniverseScene, LazyLightScene } from "@/components/three/LazyScene";
+import { LazyUniverseScene } from "@/components/three/LazyScene";
 import { useTheme } from "@/components/layout/ThemeProvider";
 import type { Hero } from "@/types/sanity";
 
@@ -24,7 +24,7 @@ export default function HeroSection({ hero }: HeroSectionProps) {
       className="relative flex min-h-screen flex-col items-center justify-center px-6 text-center select-none"
     >
       <div className="absolute inset-0 z-0">
-        {isDark ? <LazyUniverseScene /> : <LazyLightScene />}
+        <LazyUniverseScene />
       </div>
 
       {isDark && (
