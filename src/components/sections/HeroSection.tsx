@@ -21,7 +21,7 @@ export default function HeroSection({ hero }: HeroSectionProps) {
   return (
     <section
       id={SECTION_IDS.hero}
-      className="relative flex min-h-screen flex-col items-center justify-center px-6 text-center"
+      className="relative flex min-h-screen flex-col items-center justify-center px-6 text-center select-none"
     >
       <div className="absolute inset-0 z-0">
         {isDark ? <LazyUniverseScene /> : <LazyLightScene />}

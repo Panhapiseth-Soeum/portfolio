@@ -71,6 +71,56 @@ function Nebula({ color, position, rotationSpeed, scale, opacity }: {
 }
 
 /* ------------------------------------------------------------------ */
+/*  Star texture — canvas-generated starburst shape                    */
+/* ------------------------------------------------------------------ */
+function useStarTexture() {
+  return useMemo(() => {
+    const size = 128;
+    const half = size / 2;
+    const canvas = document.createElement("canvas");
+    canvas.width = size;
+    canvas.height = size;
+    const ctx = canvas.getContext("2d")!;
+
+    // Radial glow from center
+    const gradient = ctx.createRadialGradient(half, half, 0, half, half, half);
+    gradient.addColorStop(0, "rgba(255,255,255,1)");
+    gradient.addColorStop(0.05, "rgba(255,255,255,0.95)");
+    gradient.addColorStop(0.2, "rgba(255,255,255,0.5)");
+    gradient.addColorStop(0.4, "rgba(255,255,255,0.1)");
+    gradient.addColorStop(1, "rgba(255,255,255,0)");
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, size, size);
+
+    // Starburst spikes — 4 diagonal + 4 cardinal
+    ctx.globalCompositeOperation = "lighter";
+    const spikes = [
+      [0, 1], [0, -1], [1, 0], [-1, 0],          // cardinal
+      [0.7, 0.7], [-0.7, 0.7], [0.7, -0.7], [-0.7, -0.7], // diagonal
+    ];
+    for (const [dx, dy] of spikes) {
+      const spikeGrad = ctx.createLinearGradient(
+        half, half,
+        half + dx * half, half + dy * half
+      );
+      spikeGrad.addColorStop(0, "rgba(255,255,255,0.8)");
+      spikeGrad.addColorStop(0.15, "rgba(255,255,255,0.3)");
+      spikeGrad.addColorStop(1, "rgba(255,255,255,0)");
+      ctx.beginPath();
+      ctx.moveTo(half, half);
+      ctx.lineTo(half + dx * half, half + dy * half);
+      ctx.lineWidth = 3;
+      ctx.strokeStyle = spikeGrad;
+      ctx.stroke();
+    }
+
+    const tex = new THREE.CanvasTexture(canvas);
+    tex.needsUpdate = true;
+    return tex;
+  }, []);
+}
+
+/* ------------------------------------------------------------------ */
 /*  Multi-layer starfield                                              */
 /* ------------------------------------------------------------------ */
 const STAR_LAYERS = [
@@ -83,6 +133,7 @@ const STAR_LAYERS = [
 function StarLayer({ count, size, color, opacity: baseOpacity, speed, distance }: typeof STAR_LAYERS[number]) {
   const meshRef = useRef<THREE.Points>(null);
   const matRef = useRef<THREE.PointsMaterial>(null);
+  const starTexture = useStarTexture();
 
   const positions = useMemo(() => {
     const pos = new Float32Array(count * 3);
@@ -116,6 +167,7 @@ function StarLayer({ count, size, color, opacity: baseOpacity, speed, distance }
         ref={matRef}
         size={size}
         color={color}
+        map={starTexture}
         sizeAttenuation
         transparent
         opacity={baseOpacity}
@@ -382,10 +434,240 @@ function MouseParallax() {
 }
 
 /* ------------------------------------------------------------------ */
+/*  Star click explosions                                               */
+/* ------------------------------------------------------------------ */
+interface Explosion {
+  id: number;
+  position: [number, number, number];
+  age: number;
+}
+
+const EXPLOSION_PARTICLE_COUNT = 50;
+const EXPLOSION_LIFETIME = 1.5;
+
+function StarExplosions({
+  explosions,
+}: {
+  explosions: Explosion[];
+}) {
+  if (explosions.length === 0) return null;
+
+  return (
+    <>
+      {explosions.map((exp) => (
+        <ExplosionBurst key={exp.id} explosion={exp} />
+      ))}
+    </>
+  );
+}
+
+function ExplosionBurst({ explosion }: { explosion: Explosion }) {
+  const pointsRef = useRef<THREE.Points>(null);
+  const velocitiesRef = useRef<Float32Array | null>(null);
+  const ageRef = useRef(0);
+
+  const { positions, sizes } = useMemo(() => {
+    const pos = new Float32Array(EXPLOSION_PARTICLE_COUNT * 3);
+    const siz = new Float32Array(EXPLOSION_PARTICLE_COUNT);
+    for (let i = 0; i < EXPLOSION_PARTICLE_COUNT; i++) {
+      pos[i * 3] = 0;
+      pos[i * 3 + 1] = 0;
+      pos[i * 3 + 2] = 0;
+      siz[i] = Math.random() * 0.04 + 0.01;
+    }
+    return { positions: pos, sizes: siz };
+  }, []);
+
+  // Generate velocities once
+  if (!velocitiesRef.current) {
+    const vel = new Float32Array(EXPLOSION_PARTICLE_COUNT * 3);
+    for (let i = 0; i < EXPLOSION_PARTICLE_COUNT; i++) {
+      const theta = Math.random() * Math.PI * 2;
+      const phi = Math.acos(2 * Math.random() - 1);
+      const speed = 0.3 + Math.random() * 1.2;
+      vel[i * 3] = Math.sin(phi) * Math.cos(theta) * speed;
+      vel[i * 3 + 1] = Math.sin(phi) * Math.sin(theta) * speed;
+      vel[i * 3 + 2] = Math.cos(phi) * speed;
+    }
+    velocitiesRef.current = vel;
+  }
+
+  useFrame((_, delta) => {
+    if (!pointsRef.current) return;
+    ageRef.current += delta;
+    const t = ageRef.current / EXPLOSION_LIFETIME;
+    if (t >= 1) return;
+
+    const vel = velocitiesRef.current!;
+    const posAttr = pointsRef.current.geometry.attributes.position;
+    const posArray = posAttr.array as Float32Array;
+
+    for (let i = 0; i < EXPLOSION_PARTICLE_COUNT; i++) {
+      const ix = i * 3;
+      posArray[ix] = vel[ix] * t;
+      posArray[ix + 1] = vel[ix + 1] * t;
+      posArray[ix + 2] = vel[ix + 2] * t;
+    }
+    posAttr.needsUpdate = true;
+
+    const mat = pointsRef.current.material as THREE.PointsMaterial;
+    mat.opacity = 1 - t;
+  });
+
+  return (
+    <points ref={pointsRef} position={explosion.position}>
+      <bufferGeometry>
+        <bufferAttribute attach="attributes-position" args={[positions, 3]} />
+      </bufferGeometry>
+      <pointsMaterial
+        size={0.06}
+        color="#cffafe"
+        sizeAttenuation
+        transparent
+        opacity={1}
+        blending={THREE.AdditiveBlending}
+        depthWrite={false}
+      />
+    </points>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  Draggable wireframe planet                                         */
+/* ------------------------------------------------------------------ */
+function Planet() {
+  const outerGroupRef = useRef<THREE.Group>(null);
+  const spinGroupRef = useRef<THREE.Group>(null);
+  const planetHitRef = useRef<THREE.Mesh>(null);
+  const isDragging = useRef(false);
+  const prevPointer = useRef({ x: 0, y: 0 });
+  const velocity = useRef({ x: 0, y: 0 });
+  const basePos = useRef({ x: 2.2, y: 1.2 });
+
+  const icosaGeo = useMemo(
+    () => new THREE.IcosahedronGeometry(0.55, 4),
+    []
+  );
+  const edgeGeo = useMemo(
+    () => new THREE.EdgesGeometry(icosaGeo, 20),
+    [icosaGeo]
+  );
+
+  // Sync wireframe rotation with spin group
+  useFrame(({ clock, pointer }) => {
+    if (!outerGroupRef.current || !spinGroupRef.current) return;
+
+    // Float drift when not dragging
+    if (!isDragging.current) {
+      // Gentle orbit + subtle follow toward cursor (pointer is NDC -1..1)
+      const targetX = basePos.current.x + Math.sin(clock.elapsedTime * 0.3) * 0.5 + pointer.x * 0.4;
+      const targetY = basePos.current.y + Math.cos(clock.elapsedTime * 0.4) * 0.4 + pointer.y * 0.3;
+      outerGroupRef.current.position.x +=
+        (targetX - outerGroupRef.current.position.x) * 0.015;
+      outerGroupRef.current.position.y +=
+        (targetY - outerGroupRef.current.position.y) * 0.015;
+
+      // Apply inertia spin (to the spin group, everything inside rotates together)
+      spinGroupRef.current.rotation.y += velocity.current.x;
+      spinGroupRef.current.rotation.x += velocity.current.y;
+      velocity.current.x *= 0.96;
+      velocity.current.y *= 0.96;
+    }
+  });
+
+  const handleDown = (e: any) => {
+    e.stopPropagation();
+    isDragging.current = true;
+    prevPointer.current = { x: e.clientX, y: e.clientY };
+    velocity.current = { x: 0, y: 0 };
+  };
+
+  const handleMove = (e: any) => {
+    if (!isDragging.current || !spinGroupRef.current) return;
+    const dx = (e.clientX - prevPointer.current.x) * 0.01;
+    const dy = (e.clientY - prevPointer.current.y) * 0.01;
+    spinGroupRef.current.rotation.y += dx;
+    spinGroupRef.current.rotation.x += dy;
+    velocity.current = { x: dx, y: dy };
+    prevPointer.current = { x: e.clientX, y: e.clientY };
+  };
+
+  const handleUp = () => {
+    isDragging.current = false;
+  };
+
+  useEffect(() => {
+    window.addEventListener("pointermove", handleMove);
+    window.addEventListener("pointerup", handleUp);
+    return () => {
+      window.removeEventListener("pointermove", handleMove);
+      window.removeEventListener("pointerup", handleUp);
+    };
+  }, []);
+
+  return (
+    <group ref={outerGroupRef} position={[2.2, 1.2, -1]}>
+      {/* Spin group — everything inside rotates together */}
+      <group ref={spinGroupRef}>
+        {/* Clickable hit target (transparent) */}
+        <mesh
+          ref={planetHitRef}
+          onPointerDown={handleDown}
+          geometry={icosaGeo}
+        >
+          <meshBasicMaterial
+            color="#06b6d4"
+            transparent
+            opacity={0.01}
+            depthWrite={false}
+          />
+        </mesh>
+
+        {/* Wireframe edges */}
+        <lineSegments geometry={edgeGeo}>
+          <lineBasicMaterial
+            color="#22d3ee"
+            transparent
+            opacity={0.3}
+            blending={THREE.AdditiveBlending}
+            depthWrite={false}
+          />
+        </lineSegments>
+
+        {/* Inner glow */}
+        <mesh>
+          <sphereGeometry args={[0.5, 32, 32]} />
+          <meshBasicMaterial
+            color="#06b6d4"
+            transparent
+            opacity={0.04}
+            depthWrite={false}
+          />
+        </mesh>
+
+        {/* Subtle ring */}
+        <mesh rotation={[Math.PI * 0.45, 0, 0]}>
+          <torusGeometry args={[0.75, 0.012, 32, 80]} />
+          <meshBasicMaterial
+            color="#a855f7"
+            transparent
+            opacity={0.15}
+            blending={THREE.AdditiveBlending}
+            depthWrite={false}
+          />
+        </mesh>
+      </group>
+    </group>
+  );
+}
+
+/* ------------------------------------------------------------------ */
 /*  Scene container                                                    */
 /* ------------------------------------------------------------------ */
 export default function UniverseScene() {
   const [isLight, setIsLight] = useState(false);
+  const [explosions, setExplosions] = useState<Explosion[]>([]);
+  const nextExplosionId = useRef(0);
 
   useEffect(() => {
     const check = () =>
@@ -398,6 +680,29 @@ export default function UniverseScene() {
     });
     return () => obs.disconnect();
   }, []);
+
+  // Clean up old explosions
+  useEffect(() => {
+    if (explosions.length === 0) return;
+    const id = setInterval(() => {
+      setExplosions((prev) =>
+        prev.filter((e) => e.age < EXPLOSION_LIFETIME)
+      );
+    }, 200);
+    return () => clearInterval(id);
+  }, [explosions.length]);
+
+  const handleClick = (e: any) => {
+    e.stopPropagation();
+    const pos = e.point as THREE.Vector3;
+    if (!pos) return;
+    const exp: Explosion = {
+      id: nextExplosionId.current++,
+      position: [pos.x, pos.y, pos.z],
+      age: 0,
+    };
+    setExplosions((prev) => [...prev.slice(-5), exp]);
+  };
 
   if (isLight) return null;
 
@@ -420,10 +725,26 @@ export default function UniverseScene() {
       <Nebula color="#a855f7" position={[-1.8, -0.5, -2.5]} rotationSpeed={-0.06} scale={2.5} opacity={0.015} />
       <Nebula color="#22d3ee" position={[0.3, -1.2, -2]} rotationSpeed={0.05} scale={2.8} opacity={0.015} />
 
+      {/* Invisible click catcher — transparent so raycasting works */}
+      <mesh
+        onClick={handleClick}
+        position={[0, 0, -0.5]}
+      >
+        <planeGeometry args={[20, 12]} />
+        <meshBasicMaterial
+          transparent
+          opacity={0}
+          depthWrite={false}
+          depthTest={false}
+        />
+      </mesh>
+
       <MultiLayerStarfield />
       <OrbitalRings />
       <CentralShape />
+      <Planet />
       <ShootingStars />
+      <StarExplosions explosions={explosions} />
       <MouseParallax />
 
       {/* Bloom — makes bright elements glow */}
