@@ -11,3 +11,8 @@ export const LazyBackgroundParticles = dynamic(
   () => import("@/components/three/BackgroundParticles"),
   { ssr: false }
 );
+
+export const LazyLightScene = dynamic(
+  () => import("@/components/three/LightScene"),
+  { ssr: false }
+);

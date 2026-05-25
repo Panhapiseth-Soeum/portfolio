@@ -51,10 +51,10 @@ export default function Navigation({ siteTitle, navItems }: NavigationProps) {
   return (
     <header
       className={cn(
-        "fixed top-0 z-50 w-full transition-all duration-300",
+        "fixed top-0 z-50 w-full border-b transition-all duration-300",
         isScrolled
-          ? "bg-[var(--bg-primary)]/80 backdrop-blur-xl border-b border-[var(--border-color)]"
-          : "bg-transparent"
+          ? "border-[var(--border-color)] bg-[var(--bg-primary)]/80 backdrop-blur-xl"
+          : "border-transparent bg-transparent"
       )}
     >
       <nav className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">

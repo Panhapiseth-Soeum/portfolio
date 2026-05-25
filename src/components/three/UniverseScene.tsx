@@ -74,9 +74,10 @@ function Nebula({ color, position, rotationSpeed, scale, opacity }: {
 /*  Multi-layer starfield                                              */
 /* ------------------------------------------------------------------ */
 const STAR_LAYERS = [
-  { count: 2000, size: 0.012, color: "#cffafe", opacity: 0.35, speed: 0.008, distance: 7 },
-  { count: 800, size: 0.025, color: "#e0e7ff", opacity: 0.45, speed: 0.015, distance: 6 },
-  { count: 120, size: 0.045, color: "#f0e6ff", opacity: 0.5, speed: 0.022, distance: 5 },
+  { count: 4000, size: 0.015, color: "#b0c4de", opacity: 0.5, speed: 0.008, distance: 7 },
+  { count: 1500, size: 0.03, color: "#d4e4f7", opacity: 0.6, speed: 0.015, distance: 6 },
+  { count: 400, size: 0.06, color: "#ffffff", opacity: 0.75, speed: 0.022, distance: 5 },
+  { count: 40, size: 0.12, color: "#ffffff", opacity: 0.9, speed: 0.03, distance: 4.5 },
 ];
 
 function StarLayer({ count, size, color, opacity: baseOpacity, speed, distance }: typeof STAR_LAYERS[number]) {
@@ -157,7 +158,7 @@ function CentralShape() {
       new THREE.LineBasicMaterial({
         color: "#22d3ee",
         transparent: true,
-        opacity: 0.3,
+        opacity: 0.15,
         blending: THREE.AdditiveBlending,
         depthWrite: false,
       }),
@@ -170,7 +171,7 @@ function CentralShape() {
       groupRef.current.rotation.y = clock.elapsedTime * 0.18;
       groupRef.current.rotation.z = Math.sin(clock.elapsedTime * 0.1) * 0.15;
     }
-    lineMat.opacity = 0.2 + Math.sin(clock.elapsedTime * 0.7) * 0.08;
+    lineMat.opacity = 0.1 + Math.sin(clock.elapsedTime * 0.7) * 0.05;
     if (coreRef.current) {
       const s = 1 + Math.sin(clock.elapsedTime * 1.5) * 0.2;
       coreRef.current.scale.setScalar(s);
@@ -192,11 +193,11 @@ function CentralShape() {
       <lineSegments geometry={wireframeEdges} material={lineMat} />
       {/* Glowing core */}
       <mesh ref={coreRef}>
-        <sphereGeometry args={[0.06, 32, 32]} />
+        <sphereGeometry args={[0.04, 32, 32]} />
         <meshBasicMaterial
           color="#06b6d4"
           transparent
-          opacity={0.5}
+          opacity={0.2}
           blending={THREE.AdditiveBlending}
           depthWrite={false}
         />
@@ -240,7 +241,7 @@ function OrbitalRing({
       <meshBasicMaterial
         color={color}
         transparent
-        opacity={0.1}
+        opacity={0.06}
         blending={THREE.AdditiveBlending}
         depthWrite={false}
       />
@@ -384,6 +385,22 @@ function MouseParallax() {
 /*  Scene container                                                    */
 /* ------------------------------------------------------------------ */
 export default function UniverseScene() {
+  const [isLight, setIsLight] = useState(false);
+
+  useEffect(() => {
+    const check = () =>
+      setIsLight(document.documentElement.classList.contains("light"));
+    check();
+    const obs = new MutationObserver(check);
+    obs.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ["class"],
+    });
+    return () => obs.disconnect();
+  }, []);
+
+  if (isLight) return null;
+
   return (
     <Canvas
       camera={{ position: [0, 0, 5], fov: 55 }}
@@ -396,11 +413,12 @@ export default function UniverseScene() {
       style={{ position: "absolute", inset: 0 }}
     >
       <AdaptiveDpr pixelated />
+      <color attach="background" args={["#080C28"]} />
 
       {/* Nebula clouds */}
-      <Nebula color="#06b6d4" position={[1.5, 0.8, -2]} rotationSpeed={0.08} scale={3} opacity={0.04} />
-      <Nebula color="#a855f7" position={[-1.8, -0.5, -2.5]} rotationSpeed={-0.06} scale={2.5} opacity={0.03} />
-      <Nebula color="#22d3ee" position={[0.3, -1.2, -2]} rotationSpeed={0.05} scale={2.8} opacity={0.03} />
+      <Nebula color="#06b6d4" position={[1.5, 0.8, -2]} rotationSpeed={0.08} scale={3} opacity={0.015} />
+      <Nebula color="#a855f7" position={[-1.8, -0.5, -2.5]} rotationSpeed={-0.06} scale={2.5} opacity={0.015} />
+      <Nebula color="#22d3ee" position={[0.3, -1.2, -2]} rotationSpeed={0.05} scale={2.8} opacity={0.015} />
 
       <MultiLayerStarfield />
       <OrbitalRings />
@@ -411,8 +429,8 @@ export default function UniverseScene() {
       {/* Bloom — makes bright elements glow */}
       <EffectComposer>
         <Bloom
-          intensity={0.2}
-          luminanceThreshold={0.4}
+          intensity={0.15}
+          luminanceThreshold={0.5}
           luminanceSmoothing={0.9}
           mipmapBlur
         />

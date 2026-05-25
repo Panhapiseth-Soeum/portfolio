@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useMemo } from "react";
+import { useRef, useMemo, useState, useEffect } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { AdaptiveDpr } from "@react-three/drei";
 import * as THREE from "three";
@@ -61,6 +61,22 @@ function ParticleLayer({
 }
 
 export default function BackgroundParticles() {
+  const [isLight, setIsLight] = useState(false);
+
+  useEffect(() => {
+    const check = () =>
+      setIsLight(document.documentElement.classList.contains("light"));
+    check();
+    const obs = new MutationObserver(check);
+    obs.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ["class"],
+    });
+    return () => obs.disconnect();
+  }, []);
+
+  if (isLight) return null;
+
   return (
     <Canvas
       camera={{ position: [0, 0, 5], fov: 60 }}
