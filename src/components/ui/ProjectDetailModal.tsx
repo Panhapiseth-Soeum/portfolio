@@ -8,6 +8,7 @@ import PortableTextRenderer from "@/components/shared/PortableTextRenderer";
 import ImageCarousel from "@/components/ui/ImageCarousel";
 import Badge from "@/components/ui/Badge";
 import Button from "@/components/ui/Button";
+import { useTheme } from "@/components/layout/ThemeProvider";
 import type { Project } from "@/types/sanity";
 
 function getEmbedUrl(url: string): string | null {
@@ -44,6 +45,9 @@ export default function ProjectDetailModal({
   project,
   onClose,
 }: ProjectDetailModalProps) {
+  const { resolvedTheme } = useTheme();
+  const isDark = resolvedTheme === "dark";
+
   useEffect(() => {
     if (!project) return;
 
@@ -63,14 +67,14 @@ export default function ProjectDetailModal({
     <AnimatePresence>
       {project && (
         <motion.div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-8"
+          className="fixed inset-0 z-[60] flex items-center justify-center p-4 sm:p-8"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.2 }}
         >
           <motion.div
-            className="absolute inset-0 bg-black/70 backdrop-blur-sm"
+            className={`absolute inset-0 ${isDark ? "bg-black/30 backdrop-blur-sm" : "bg-black/10 backdrop-blur-[2px]"}`}
             onClick={onClose}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -78,7 +82,7 @@ export default function ProjectDetailModal({
           />
 
           <motion.div
-            className="relative z-10 flex max-h-[90vh] w-full max-w-3xl flex-col overflow-y-auto rounded-2xl border bg-[var(--bg-secondary)] border-[var(--border-color)] shadow-2xl"
+            className={`relative z-10 flex max-h-[90vh] w-full max-w-3xl flex-col overflow-y-auto rounded-[32px] border shadow-2xl ${isDark ? "backdrop-blur-xl bg-[var(--glass-bg)] border-[var(--glass-border)]" : "bg-white/50 backdrop-blur-sm border-white/40"}`}
             initial={{ opacity: 0, scale: 0.95, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
@@ -86,14 +90,14 @@ export default function ProjectDetailModal({
           >
             <button
               onClick={onClose}
-              className="absolute top-4 right-4 z-10 flex h-8 w-8 items-center justify-center rounded-full border border-[var(--border-color)] bg-[var(--bg-secondary)] text-[var(--text-secondary)] transition-colors hover:text-accent"
+              className={`absolute top-4 right-4 z-10 flex h-8 w-8 items-center justify-center rounded-full border text-[var(--text-secondary)] transition-colors hover:border-accent hover:text-accent ${isDark ? "border-[var(--glass-border)] bg-[var(--glass-bg)] backdrop-blur-md" : "border-white/40 bg-white/50 backdrop-blur-sm"}`}
               aria-label="Close modal"
             >
               <X className="h-4 w-4" />
             </button>
 
             {project.videoUrl && getEmbedUrl(project.videoUrl) ? (
-              <div className="relative w-full overflow-hidden rounded-t-2xl bg-black" style={{ aspectRatio: "16/10", minHeight: 320 }}>
+              <div className="relative w-full overflow-hidden rounded-t-[32px] bg-[var(--bg-secondary)]" style={{ aspectRatio: "16/10", minHeight: 320 }}>
                 <iframe
                   src={getEmbedUrl(project.videoUrl)!}
                   title={`${project.title} demo video`}
@@ -103,7 +107,7 @@ export default function ProjectDetailModal({
                 />
               </div>
             ) : project.coverImage ? (
-              <div className="relative w-full overflow-hidden rounded-t-2xl" style={{ aspectRatio: "16/10", minHeight: 320 }}>
+              <div className="relative w-full overflow-hidden rounded-t-[32px]" style={{ aspectRatio: "16/10", minHeight: 320 }}>
                 <SanityImage
                   image={project.coverImage}
                   alt={project.title}

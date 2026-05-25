@@ -1,3 +1,6 @@
+"use client";
+
+import { usePathname } from "next/navigation";
 import type { SocialLink } from "@/types/sanity";
 import { FolderGit, BriefcaseBusiness, Mail } from "lucide-react";
 
@@ -13,7 +16,10 @@ interface FooterProps {
 }
 
 export default function Footer({ siteTitle, socialLinks }: FooterProps) {
+  const pathname = usePathname();
   const year = new Date().getFullYear();
+
+  if (pathname.startsWith("/studio")) return null;
 
   return (
     <footer className="border-t border-[var(--border-color)]">

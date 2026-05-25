@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { usePathname } from "next/navigation";
 import { Menu, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import ThemeToggle from "@/components/ui/ThemeToggle";
@@ -12,9 +13,12 @@ interface NavigationProps {
 }
 
 export default function Navigation({ siteTitle, navItems }: NavigationProps) {
+  const pathname = usePathname();
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [activeSection, setActiveSection] = useState("");
+
+  if (pathname.startsWith("/studio")) return null;
 
   useEffect(() => {
     const onScroll = () => setIsScrolled(window.scrollY > 20);

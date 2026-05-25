@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Award, Download, ExternalLink, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { SECTION_IDS } from "@/lib/constants";
+import { useTheme } from "@/components/layout/ThemeProvider";
 import SectionHeading from "@/components/ui/SectionHeading";
 import { BentoGrid, BentoCard } from "@/components/ui/BentoGrid";
 import SanityImage from "@/components/shared/SanityImage";
@@ -19,6 +20,8 @@ interface CertificatesSectionProps {
 export default function CertificatesSection({
   certificates,
 }: CertificatesSectionProps) {
+  const { resolvedTheme } = useTheme();
+  const isDark = resolvedTheme === "dark";
   const [selected, setSelected] = useState<Certificate | null>(null);
 
   if (!certificates || certificates.length === 0) return null;
@@ -80,27 +83,27 @@ export default function CertificatesSection({
       <AnimatePresence>
         {selected && (
           <motion.div
-            className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-8"
+            className="fixed inset-0 z-[60] flex items-center justify-center p-4 sm:p-8"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
           >
             <motion.div
-              className="absolute inset-0 bg-black/80 backdrop-blur-sm"
+              className={`absolute inset-0 ${isDark ? "bg-black/30 backdrop-blur-sm" : "bg-black/10 backdrop-blur-[2px]"}`}
               onClick={() => setSelected(null)}
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
             />
             <motion.div
-              className="relative z-10 flex max-h-[90vh] w-full max-w-4xl flex-col overflow-y-auto rounded-2xl border border-[var(--border-color)] bg-[var(--bg-secondary)] shadow-2xl"
+              className={`relative z-10 flex max-h-[90vh] w-full max-w-4xl flex-col overflow-y-auto rounded-[32px] border shadow-2xl ${isDark ? "backdrop-blur-xl bg-[var(--glass-bg)] border-[var(--glass-border)]" : "bg-white/50 backdrop-blur-sm border-white/40"}`}
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
             >
               <button
                 onClick={() => setSelected(null)}
-                className="absolute top-4 right-4 z-10 flex h-8 w-8 items-center justify-center rounded-full border border-[var(--border-color)] bg-[var(--bg-secondary)] text-[var(--text-secondary)] transition-colors hover:text-accent"
+                className={`absolute top-4 right-4 z-10 flex h-8 w-8 items-center justify-center rounded-full border text-[var(--text-secondary)] transition-colors hover:border-accent hover:text-accent ${isDark ? "border-[var(--glass-border)] bg-[var(--glass-bg)] backdrop-blur-md" : "border-white/40 bg-white/50 backdrop-blur-sm"}`}
                 aria-label="Close"
               >
                 <X className="h-4 w-4" />
@@ -113,7 +116,7 @@ export default function CertificatesSection({
                     alt={selected.title}
                     width={1200}
                     height={800}
-                    className="w-full rounded-t-2xl"
+                    className="w-full rounded-t-[32px]"
                     priority
                     sizes="(max-width: 768px) 100vw, 800px"
                   />

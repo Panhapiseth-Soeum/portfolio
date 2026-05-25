@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useMemo, useState, useEffect } from "react";
+import { usePathname } from "next/navigation";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { AdaptiveDpr } from "@react-three/drei";
 import * as THREE from "three";
@@ -101,7 +102,10 @@ function ParticleLayer({
 }
 
 export default function BackgroundParticles() {
+  const pathname = usePathname();
   const [isLight, setIsLight] = useState(false);
+
+  if (pathname.startsWith("/studio")) return null;
 
   useEffect(() => {
     const check = () =>

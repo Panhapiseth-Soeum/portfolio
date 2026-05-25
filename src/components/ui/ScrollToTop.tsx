@@ -1,12 +1,16 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { usePathname } from "next/navigation";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import { ArrowUp } from "lucide-react";
 
 export default function ScrollToTop() {
+  const pathname = usePathname();
   const [visible, setVisible] = useState(false);
   const prefersReducedMotion = useReducedMotion() ?? false;
+
+  if (pathname.startsWith("/studio")) return null;
 
   useEffect(() => {
     const hero = document.getElementById("hero");
