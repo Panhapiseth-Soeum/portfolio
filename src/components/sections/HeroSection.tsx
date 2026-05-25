@@ -2,6 +2,7 @@ import { ArrowDown } from "lucide-react";
 import { SECTION_IDS } from "@/lib/constants";
 import Button from "@/components/ui/Button";
 import ScrollReveal from "@/components/ui/ScrollReveal";
+import { LazyUniverseScene } from "@/components/three/LazyScene";
 import type { Hero } from "@/types/sanity";
 
 interface HeroSectionProps {
@@ -16,7 +17,9 @@ export default function HeroSection({ hero }: HeroSectionProps) {
       id={SECTION_IDS.hero}
       className="relative flex min-h-screen flex-col items-center justify-center px-6 text-center"
     >
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(99,102,241,0.08),transparent_70%)]" />
+      <div className="absolute inset-0 z-0">
+        <LazyUniverseScene />
+      </div>
 
       <div className="relative z-10 flex max-w-3xl flex-col items-center gap-6">
         <ScrollReveal delay={0.1}>
