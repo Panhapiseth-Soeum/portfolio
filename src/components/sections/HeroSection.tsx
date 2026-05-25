@@ -21,6 +21,9 @@ export default function HeroSection({ hero }: HeroSectionProps) {
         <LazyUniverseScene />
       </div>
 
+      {/* Dark overlay — keeps text readable against the 3D scene */}
+      <div className="pointer-events-none absolute inset-0 z-[1] bg-[radial-gradient(ellipse_at_center,rgba(0,0,0,0.25),transparent_60%)]" />
+
       <div className="relative z-10 flex max-w-3xl flex-col items-center gap-6">
         <ScrollReveal delay={0.1}>
           <p className="font-display text-lg text-accent">Hi, I&rsquo;m</p>

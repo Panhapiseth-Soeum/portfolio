@@ -74,9 +74,9 @@ function Nebula({ color, position, rotationSpeed, scale, opacity }: {
 /*  Multi-layer starfield                                              */
 /* ------------------------------------------------------------------ */
 const STAR_LAYERS = [
-  { count: 2000, size: 0.012, color: "#fef3c7", opacity: 0.5, speed: 0.008, distance: 7 },
-  { count: 800, size: 0.025, color: "#dbeafe", opacity: 0.65, speed: 0.015, distance: 6 },
-  { count: 200, size: 0.045, color: "#ffffff", opacity: 0.8, speed: 0.022, distance: 5 },
+  { count: 2000, size: 0.012, color: "#cffafe", opacity: 0.35, speed: 0.008, distance: 7 },
+  { count: 800, size: 0.025, color: "#e0e7ff", opacity: 0.45, speed: 0.015, distance: 6 },
+  { count: 120, size: 0.045, color: "#f0e6ff", opacity: 0.5, speed: 0.022, distance: 5 },
 ];
 
 function StarLayer({ count, size, color, opacity: baseOpacity, speed, distance }: typeof STAR_LAYERS[number]) {
@@ -155,9 +155,9 @@ function CentralShape() {
   const lineMat = useMemo(
     () =>
       new THREE.LineBasicMaterial({
-        color: "#818cf8",
+        color: "#22d3ee",
         transparent: true,
-        opacity: 0.4,
+        opacity: 0.3,
         blending: THREE.AdditiveBlending,
         depthWrite: false,
       }),
@@ -170,7 +170,7 @@ function CentralShape() {
       groupRef.current.rotation.y = clock.elapsedTime * 0.18;
       groupRef.current.rotation.z = Math.sin(clock.elapsedTime * 0.1) * 0.15;
     }
-    lineMat.opacity = 0.3 + Math.sin(clock.elapsedTime * 0.7) * 0.1;
+    lineMat.opacity = 0.2 + Math.sin(clock.elapsedTime * 0.7) * 0.08;
     if (coreRef.current) {
       const s = 1 + Math.sin(clock.elapsedTime * 1.5) * 0.2;
       coreRef.current.scale.setScalar(s);
@@ -182,9 +182,9 @@ function CentralShape() {
       {/* Subtle solid fill */}
       <mesh geometry={geo}>
         <meshBasicMaterial
-          color="#6366f1"
+          color="#06b6d4"
           transparent
-          opacity={0.04}
+          opacity={0.03}
           depthWrite={false}
         />
       </mesh>
@@ -192,11 +192,11 @@ function CentralShape() {
       <lineSegments geometry={wireframeEdges} material={lineMat} />
       {/* Glowing core */}
       <mesh ref={coreRef}>
-        <sphereGeometry args={[0.1, 32, 32]} />
+        <sphereGeometry args={[0.06, 32, 32]} />
         <meshBasicMaterial
-          color="#c7d2fe"
+          color="#06b6d4"
           transparent
-          opacity={0.9}
+          opacity={0.5}
           blending={THREE.AdditiveBlending}
           depthWrite={false}
         />
@@ -209,9 +209,9 @@ function CentralShape() {
 /*  Orbital rings with particles                                       */
 /* ------------------------------------------------------------------ */
 const RING_CONFIGS = [
-  { radius: 1.3, tube: 0.008, rotationX: Math.PI * 0.15, speed: 0.25, color: "#818cf8" },
-  { radius: 1.5, tube: 0.006, rotationX: Math.PI * 0.55, speed: -0.18, color: "#a5b4fc" },
-  { radius: 1.1, tube: 0.005, rotationX: Math.PI * 0.35, speed: 0.32, color: "#6366f1" },
+  { radius: 1.3, tube: 0.008, rotationX: Math.PI * 0.15, speed: 0.25, color: "#22d3ee" },
+  { radius: 1.5, tube: 0.006, rotationX: Math.PI * 0.55, speed: -0.18, color: "#a855f7" },
+  { radius: 1.1, tube: 0.005, rotationX: Math.PI * 0.35, speed: 0.32, color: "#06b6d4" },
 ];
 
 function OrbitalRing({
@@ -240,7 +240,7 @@ function OrbitalRing({
       <meshBasicMaterial
         color={color}
         transparent
-        opacity={0.15}
+        opacity={0.1}
         blending={THREE.AdditiveBlending}
         depthWrite={false}
       />
@@ -340,7 +340,7 @@ function ShootingStars() {
             >
               <sphereGeometry args={[0.015, 6, 6]} />
               <meshBasicMaterial
-                color="#c7d2fe"
+                color="#a855f7"
                 transparent
                 opacity={alpha * 0.5}
                 blending={THREE.AdditiveBlending}
@@ -398,9 +398,9 @@ export default function UniverseScene() {
       <AdaptiveDpr pixelated />
 
       {/* Nebula clouds */}
-      <Nebula color="#6366f1" position={[1.5, 0.8, -2]} rotationSpeed={0.08} scale={3} opacity={0.06} />
-      <Nebula color="#2dd4bf" position={[-1.8, -0.5, -2.5]} rotationSpeed={-0.06} scale={2.5} opacity={0.04} />
-      <Nebula color="#818cf8" position={[0.3, -1.2, -2]} rotationSpeed={0.05} scale={2.8} opacity={0.05} />
+      <Nebula color="#06b6d4" position={[1.5, 0.8, -2]} rotationSpeed={0.08} scale={3} opacity={0.04} />
+      <Nebula color="#a855f7" position={[-1.8, -0.5, -2.5]} rotationSpeed={-0.06} scale={2.5} opacity={0.03} />
+      <Nebula color="#22d3ee" position={[0.3, -1.2, -2]} rotationSpeed={0.05} scale={2.8} opacity={0.03} />
 
       <MultiLayerStarfield />
       <OrbitalRings />
@@ -411,8 +411,8 @@ export default function UniverseScene() {
       {/* Bloom — makes bright elements glow */}
       <EffectComposer>
         <Bloom
-          intensity={0.4}
-          luminanceThreshold={0.2}
+          intensity={0.2}
+          luminanceThreshold={0.4}
           luminanceSmoothing={0.9}
           mipmapBlur
         />
