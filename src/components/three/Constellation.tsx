@@ -1,16 +1,52 @@
 "use client";
 
-import { useRef, useMemo, useEffect } from "react";
+import { useRef, useMemo } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
 
-const PARTICLE_COUNT = 200;
-const CONNECT_DISTANCE = 2.2;
-const INFLUENCE_RADIUS = 3.0;
-const ATTRACT_FORCE = 0.015;
-const SPRING_FORCE = 0.008;
-const DAMPING = 0.92;
-const COLORS = ["#6366f1", "#818cf8", "#64748b", "#475569", "#334155"];
+const PARTICLE_COUNT = 320;
+const CONNECT_DISTANCE = 1.6;
+const INFLUENCE_RADIUS = 3.5;
+const ATTRACT_FORCE = 0.012;
+const SPRING_FORCE = 0.006;
+const DAMPING = 0.93;
+const COLORS = ["#FF0000", "#FF0000", "#FF0000", "#FF0000", "#FF0000"];
+
+function useStarTexture() {
+  return useMemo(() => {
+    const size = 128;
+    const half = size / 2;
+    const canvas = document.createElement("canvas");
+    canvas.width = size;
+    canvas.height = size;
+    const ctx = canvas.getContext("2d")!;
+    const gradient = ctx.createRadialGradient(half, half, 0, half, half, half);
+    gradient.addColorStop(0, "rgba(255,255,255,1)");
+    gradient.addColorStop(0.05, "rgba(255,255,255,0.95)");
+    gradient.addColorStop(0.2, "rgba(255,255,255,0.5)");
+    gradient.addColorStop(0.4, "rgba(255,255,255,0.1)");
+    gradient.addColorStop(1, "rgba(255,255,255,0)");
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, size, size);
+    ctx.globalCompositeOperation = "lighter";
+    const spikes = [[0,1],[0,-1],[1,0],[-1,0],[0.7,0.7],[-0.7,0.7],[0.7,-0.7],[-0.7,-0.7]];
+    for (const [dx, dy] of spikes) {
+      const g = ctx.createLinearGradient(half, half, half + dx * half, half + dy * half);
+      g.addColorStop(0, "rgba(255,255,255,0.8)");
+      g.addColorStop(0.15, "rgba(255,255,255,0.3)");
+      g.addColorStop(1, "rgba(255,255,255,0)");
+      ctx.beginPath();
+      ctx.moveTo(half, half);
+      ctx.lineTo(half + dx * half, half + dy * half);
+      ctx.lineWidth = 3;
+      ctx.strokeStyle = g;
+      ctx.stroke();
+    }
+    const tex = new THREE.CanvasTexture(canvas);
+    tex.needsUpdate = true;
+    return tex;
+  }, []);
+}
 
 let mouseNDC = { x: 0, y: 0 };
 if (typeof window !== "undefined") {
@@ -20,10 +56,69 @@ if (typeof window !== "undefined") {
   });
 }
 
+/* ------------------------------------------------------------------ */
+/*  Floating geometric shapes for light mode                           */
+/* ------------------------------------------------------------------ */
+const SHAPES: {
+  geo: THREE.BufferGeometry;
+  edgeGeo: THREE.BufferGeometry;
+  position: [number, number, number];
+  color: string;
+  speed: number;
+  scale: number;
+}[] = (() => {
+  const ico = new THREE.IcosahedronGeometry(0.4, 1);
+  const octa = new THREE.OctahedronGeometry(0.35, 0);
+  const dodec = new THREE.DodecahedronGeometry(0.3, 0);
+  const tetra = new THREE.TetrahedronGeometry(0.3, 0);
+  return [
+    { geo: ico, edgeGeo: new THREE.EdgesGeometry(ico, 30), position: [2.5, 1.5, -1], color: "#BBD5DA", speed: 0.3, scale: 1 },
+    { geo: octa, edgeGeo: new THREE.EdgesGeometry(octa, 30), position: [-2.8, -1, -1.5], color: "#DFF1F1", speed: -0.25, scale: 1.1 },
+    { geo: dodec, edgeGeo: new THREE.EdgesGeometry(dodec, 30), position: [3, -0.8, -0.5], color: "#FF0000", speed: 0.2, scale: 0.9 },
+    { geo: tetra, edgeGeo: new THREE.EdgesGeometry(tetra, 30), position: [-2.5, 1.8, -1.2], color: "#BBD5DA", speed: -0.35, scale: 1 },
+  ];
+})();
+
+function FloatingShapes() {
+  const groupRef = useRef<THREE.Group>(null);
+
+  useFrame(({ clock, pointer }) => {
+    if (!groupRef.current) return;
+    groupRef.current.children.forEach((child, i) => {
+      const cfg = SHAPES[i];
+      child.rotation.x = clock.elapsedTime * cfg.speed * 0.3;
+      child.rotation.y = clock.elapsedTime * cfg.speed * 0.5;
+      child.position.x +=
+        (cfg.position[0] + pointer.x * 0.3 - child.position.x) * 0.02;
+      child.position.y +=
+        (cfg.position[1] + pointer.y * 0.2 - child.position.y) * 0.02;
+    });
+  });
+
+  return (
+    <group ref={groupRef}>
+      {SHAPES.map((cfg, i) => (
+        <group key={i} position={cfg.position} scale={cfg.scale}>
+          <mesh geometry={cfg.geo}>
+            <meshBasicMaterial color={cfg.color} transparent opacity={0.06} depthWrite={false} />
+          </mesh>
+          <lineSegments geometry={cfg.edgeGeo}>
+            <lineBasicMaterial color={cfg.color} transparent opacity={0.25} depthWrite={false} />
+          </lineSegments>
+        </group>
+      ))}
+    </group>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  Constellation network                                              */
+/* ------------------------------------------------------------------ */
 export function Constellation() {
   const groupRef = useRef<THREE.Group>(null);
   const pointsRef = useRef<THREE.Points>(null);
   const linesRef = useRef<THREE.LineSegments>(null);
+  const starTexture = useStarTexture();
   const velocitiesRef = useRef(new Float32Array(PARTICLE_COUNT * 3));
   const smoothCursorRef = useRef(new THREE.Vector3());
   const prevCursorRef = useRef(new THREE.Vector3());
@@ -90,7 +185,6 @@ export function Constellation() {
 
     const speed = prevCursorRef.current.distanceTo(cursorWorldRef.current);
     prevCursorRef.current.copy(cursorWorldRef.current);
-
     const isMoving = speed > 0.003;
     activityRef.current +=
       (isMoving ? 1 : 0 - activityRef.current) * Math.min(delta * 1.2, 1);
@@ -159,15 +253,90 @@ export function Constellation() {
         <bufferGeometry>
           <bufferAttribute attach="attributes-position" args={[linePositions, 3]} />
         </bufferGeometry>
-        <lineBasicMaterial color="#6366f1" transparent opacity={0.1} depthWrite={false} />
+        <lineBasicMaterial color="#4338ca" transparent opacity={0.3} depthWrite={false} />
       </lineSegments>
       <points ref={pointsRef}>
         <bufferGeometry>
           <bufferAttribute attach="attributes-position" args={[positions, 3]} />
           <bufferAttribute attach="attributes-color" args={[colors, 3]} />
         </bufferGeometry>
-        <pointsMaterial size={0.05} vertexColors sizeAttenuation transparent opacity={0.6} depthWrite={false} />
+        <pointsMaterial size={0.1} vertexColors map={starTexture} sizeAttenuation transparent opacity={0.85} depthWrite={false} />
       </points>
     </group>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  Geographic globe — hero sits inside latitude/longitude rings       */
+/* ------------------------------------------------------------------ */
+function EnclosingSphere() {
+  const globeRef = useRef<THREE.Group>(null);
+
+  const rings = useMemo(() => {
+    const result: { geo: THREE.TorusGeometry; rotation: [number, number, number]; opacity: number }[] = [];
+    const R = 4.5;
+    const tube = 0.015;
+
+    // Latitude rings (horizontal, stacked)
+    const latAngles = [-60, -40, -20, 0, 20, 40, 60];
+    for (const deg of latAngles) {
+      const rad = (deg * Math.PI) / 180;
+      const r = R * Math.cos(rad);
+      const y = R * Math.sin(rad);
+      result.push({
+        geo: new THREE.TorusGeometry(r, tube, 16, 100),
+        rotation: [Math.PI / 2, 0, 0],
+        opacity: deg === 0 ? 0.22 : 0.12,
+      });
+    }
+
+    // Longitude rings (vertical, rotated around Y)
+    const lonCount = 8;
+    for (let i = 0; i < lonCount; i++) {
+      const angle = (i / lonCount) * Math.PI;
+      result.push({
+        geo: new THREE.TorusGeometry(R, tube, 16, 100),
+        rotation: [0, 0, angle],
+        opacity: 0.1,
+      });
+    }
+
+    return result;
+  }, []);
+
+  useFrame(({ clock }) => {
+    if (globeRef.current) {
+      globeRef.current.rotation.y = clock.elapsedTime * 0.15;
+      globeRef.current.rotation.x = Math.sin(clock.elapsedTime * 0.2) * 0.2;
+      globeRef.current.rotation.z = clock.elapsedTime * 0.08;
+    }
+  });
+
+  return (
+    <group ref={globeRef}>
+      {rings.map((ring, i) => (
+        <mesh key={i} rotation={ring.rotation} geometry={ring.geo}>
+          <meshBasicMaterial
+            color="#BBD5DA"
+            transparent
+            opacity={ring.opacity}
+            depthWrite={false}
+          />
+        </mesh>
+      ))}
+    </group>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  Combined light mode scene                                          */
+/* ------------------------------------------------------------------ */
+export function LightModeScene() {
+  return (
+    <>
+      <EnclosingSphere />
+      <Constellation />
+      <FloatingShapes />
+    </>
   );
 }

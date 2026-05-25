@@ -4,7 +4,7 @@ import { useRef, useMemo, useState, useEffect } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { AdaptiveDpr } from "@react-three/drei";
 import { EffectComposer, Bloom } from "@react-three/postprocessing";
-import { Constellation } from "@/components/three/Constellation";
+import { LightModeScene } from "@/components/three/Constellation";
 import * as THREE from "three";
 
 /* ------------------------------------------------------------------ */
@@ -742,9 +742,9 @@ export default function UniverseScene() {
       </EffectComposer>
       </group>
 
-      {/* Light mode constellation */}
+      {/* Light mode scene */}
       <group visible={isLight}>
-        <Constellation />
+        <LightModeScene />
       </group>
     </Canvas>
   );
