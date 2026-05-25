@@ -1,5 +1,5 @@
 import type { SocialLink } from "@/types/sanity";
-import { FolderGit, BriefcaseBusiness, Mail, ArrowUp } from "lucide-react";
+import { FolderGit, BriefcaseBusiness, Mail } from "lucide-react";
 
 const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   Github: FolderGit,
@@ -38,13 +38,6 @@ export default function Footer({ siteTitle, socialLinks }: FooterProps) {
               </a>
             );
           })}
-          <a
-            href="#hero"
-            className="ml-2 flex h-8 w-8 items-center justify-center rounded-full border border-[var(--border-color)] text-[var(--text-secondary)] transition-colors hover:text-accent hover:border-accent"
-            aria-label="Back to top"
-          >
-            <ArrowUp className="h-4 w-4" />
-          </a>
         </div>
       </div>
     </footer>

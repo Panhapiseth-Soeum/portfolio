@@ -9,6 +9,7 @@ import { urlForImage } from "@/sanity/image";
 import type { SiteSettings } from "@/types/sanity";
 import Navigation from "@/components/layout/Navigation";
 import Footer from "@/components/layout/Footer";
+import ScrollToTop from "@/components/ui/ScrollToTop";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -76,6 +77,7 @@ export default async function RootLayout({
             siteTitle={settings?.title || "Portfolio"}
             socialLinks={settings?.socialLinks}
           />
+          <ScrollToTop />
           <Analytics />
         </ThemeProvider>
       </body>
