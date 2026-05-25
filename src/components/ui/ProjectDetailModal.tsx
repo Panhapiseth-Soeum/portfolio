@@ -93,7 +93,7 @@ export default function ProjectDetailModal({
             </button>
 
             {project.videoUrl && getEmbedUrl(project.videoUrl) ? (
-              <div className="relative aspect-video w-full overflow-hidden rounded-t-2xl bg-black">
+              <div className="relative w-full overflow-hidden rounded-t-2xl bg-black" style={{ aspectRatio: "16/10", minHeight: 320 }}>
                 <iframe
                   src={getEmbedUrl(project.videoUrl)!}
                   title={`${project.title} demo video`}
@@ -103,7 +103,7 @@ export default function ProjectDetailModal({
                 />
               </div>
             ) : project.coverImage ? (
-              <div className="relative aspect-video w-full overflow-hidden rounded-t-2xl">
+              <div className="relative w-full overflow-hidden rounded-t-2xl" style={{ aspectRatio: "16/10", minHeight: 320 }}>
                 <SanityImage
                   image={project.coverImage}
                   alt={project.title}

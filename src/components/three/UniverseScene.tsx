@@ -466,16 +466,9 @@ function ExplosionBurst({ explosion }: { explosion: Explosion }) {
   const velocitiesRef = useRef<Float32Array | null>(null);
   const ageRef = useRef(0);
 
-  const { positions, sizes } = useMemo(() => {
+  const positions = useMemo(() => {
     const pos = new Float32Array(EXPLOSION_PARTICLE_COUNT * 3);
-    const siz = new Float32Array(EXPLOSION_PARTICLE_COUNT);
-    for (let i = 0; i < EXPLOSION_PARTICLE_COUNT; i++) {
-      pos[i * 3] = 0;
-      pos[i * 3 + 1] = 0;
-      pos[i * 3 + 2] = 0;
-      siz[i] = Math.random() * 0.04 + 0.01;
-    }
-    return { positions: pos, sizes: siz };
+    return pos;
   }, []);
 
   // Generate velocities once
