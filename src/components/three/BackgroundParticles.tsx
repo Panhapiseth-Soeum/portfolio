@@ -5,8 +5,20 @@ import { Canvas, useFrame } from "@react-three/fiber";
 import { AdaptiveDpr } from "@react-three/drei";
 import * as THREE from "three";
 
-function Particles({ count = 400 }: { count?: number }) {
+const PARTICLE_LAYERS = [
+  { count: 400, size: 0.015, color: "#fef3c7", opacity: 0.2, speed: 0.006 },
+  { count: 150, size: 0.028, color: "#dbeafe", opacity: 0.3, speed: 0.012 },
+];
+
+function ParticleLayer({
+  count,
+  size,
+  color,
+  opacity: baseOpacity,
+  speed,
+}: (typeof PARTICLE_LAYERS)[number]) {
   const meshRef = useRef<THREE.Points>(null);
+  const matRef = useRef<THREE.PointsMaterial>(null);
 
   const positions = useMemo(() => {
     const pos = new Float32Array(count * 3);
@@ -20,25 +32,27 @@ function Particles({ count = 400 }: { count?: number }) {
 
   useFrame(({ clock }) => {
     if (meshRef.current) {
-      meshRef.current.rotation.y = clock.elapsedTime * 0.008;
-      meshRef.current.position.y = Math.sin(clock.elapsedTime * 0.15) * 0.3;
+      meshRef.current.rotation.y = clock.elapsedTime * speed;
+      meshRef.current.position.y = Math.sin(clock.elapsedTime * 0.12) * 0.25;
+    }
+    if (matRef.current) {
+      matRef.current.opacity =
+        baseOpacity + Math.sin(clock.elapsedTime * 0.4) * 0.05;
     }
   });
 
   return (
     <points ref={meshRef}>
       <bufferGeometry>
-        <bufferAttribute
-          attach="attributes-position"
-          args={[positions, 3]}
-        />
+        <bufferAttribute attach="attributes-position" args={[positions, 3]} />
       </bufferGeometry>
       <pointsMaterial
-        size={0.02}
-        color="#a5b4fc"
+        ref={matRef}
+        size={size}
+        color={color}
         sizeAttenuation
         transparent
-        opacity={0.25}
+        opacity={baseOpacity}
         blending={THREE.AdditiveBlending}
         depthWrite={false}
       />
@@ -64,7 +78,9 @@ export default function BackgroundParticles() {
       }}
     >
       <AdaptiveDpr pixelated />
-      <Particles />
+      {PARTICLE_LAYERS.map((layer, i) => (
+        <ParticleLayer key={i} {...layer} />
+      ))}
     </Canvas>
   );
 }
