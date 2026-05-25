@@ -10,6 +10,7 @@ import type { SiteSettings } from "@/types/sanity";
 import Navigation from "@/components/layout/Navigation";
 import Footer from "@/components/layout/Footer";
 import ScrollToTop from "@/components/ui/ScrollToTop";
+import { LazyBackgroundParticles } from "@/components/three/LazyScene";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -68,11 +69,12 @@ export default async function RootLayout({
       </head>
       <body className="min-h-screen flex flex-col bg-[var(--bg-primary)] text-[var(--text-primary)]">
         <ThemeProvider>
+          <LazyBackgroundParticles />
           <Navigation
             siteTitle={settings?.title || "Portfolio"}
             navItems={settings?.navItems}
           />
-          <main className="flex-1">{children}</main>
+          <main className="relative z-10 flex-1">{children}</main>
           <Footer
             siteTitle={settings?.title || "Portfolio"}
             socialLinks={settings?.socialLinks}

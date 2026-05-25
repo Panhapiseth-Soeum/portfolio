@@ -4,7 +4,6 @@ import { useRef, useMemo, useState, useEffect } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { AdaptiveDpr } from "@react-three/drei";
 import { EffectComposer, Bloom } from "@react-three/postprocessing";
-import { LightModeScene } from "@/components/three/Constellation";
 import * as THREE from "three";
 
 /* ------------------------------------------------------------------ */
@@ -527,6 +526,191 @@ function ExplosionBurst({ explosion }: { explosion: Explosion }) {
 }
 
 /* ------------------------------------------------------------------ */
+/*  Satellite model                                                    */
+/* ------------------------------------------------------------------ */
+function SatelliteModel({ color }: { color: string }) {
+  return (
+    <group>
+      {/* Body */}
+      <mesh>
+        <boxGeometry args={[0.12, 0.06, 0.06]} />
+        <meshBasicMaterial color={color} transparent opacity={0.7} blending={THREE.AdditiveBlending} depthWrite={false} />
+      </mesh>
+      {/* Solar panel left */}
+      <mesh position={[-0.12, 0, 0]}>
+        <boxGeometry args={[0.1, 0.01, 0.16]} />
+        <meshBasicMaterial color="#06b6d4" transparent opacity={0.4} blending={THREE.AdditiveBlending} depthWrite={false} />
+      </mesh>
+      {/* Solar panel right */}
+      <mesh position={[0.12, 0, 0]}>
+        <boxGeometry args={[0.1, 0.01, 0.16]} />
+        <meshBasicMaterial color="#06b6d4" transparent opacity={0.4} blending={THREE.AdditiveBlending} depthWrite={false} />
+      </mesh>
+      {/* Antenna */}
+      <mesh position={[0, 0.05, 0]}>
+        <cylinderGeometry args={[0.005, 0.005, 0.08, 8]} />
+        <meshBasicMaterial color={color} transparent opacity={0.5} blending={THREE.AdditiveBlending} depthWrite={false} />
+      </mesh>
+      {/* Antenna dish */}
+      <mesh position={[0, 0.1, 0]}>
+        <sphereGeometry args={[0.015, 8, 8]} />
+        <meshBasicMaterial color="#cffafe" transparent opacity={0.8} blending={THREE.AdditiveBlending} depthWrite={false} />
+      </mesh>
+    </group>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  Orbiting satellites                                                */
+/* ------------------------------------------------------------------ */
+const SATELLITES = [
+  { orbitR: 1.8, speed: 0.35, tilt: 0.3, color: "#22d3ee" },
+  { orbitR: 2.4, speed: -0.28, tilt: -0.5, color: "#a855f7" },
+  { orbitR: 2.1, speed: 0.45, tilt: 0.7, color: "#06b6d4" },
+];
+
+function Satellites() {
+  const groupRef = useRef<THREE.Group>(null);
+
+  useFrame(({ clock }) => {
+    if (!groupRef.current) return;
+    groupRef.current.children.forEach((child, i) => {
+      const cfg = SATELLITES[i];
+      const t = clock.elapsedTime * cfg.speed;
+      child.position.x = Math.cos(t) * cfg.orbitR;
+      child.position.z = Math.sin(t) * cfg.orbitR;
+      child.position.y = Math.sin(t * 0.6) * cfg.tilt;
+      // Face direction of orbit
+      child.rotation.z = -t;
+      child.rotation.y = Math.sin(t * 0.5) * 0.3;
+    });
+  });
+
+  return (
+    <group ref={groupRef}>
+      {SATELLITES.map((cfg, i) => (
+        <SatelliteModel key={i} color={cfg.color} />
+      ))}
+    </group>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  Wormhole / portal                                                  */
+/* ------------------------------------------------------------------ */
+function Wormhole() {
+  const groupRef = useRef<THREE.Group>(null);
+  const particlesRef = useRef<THREE.Points>(null);
+  const outerRingRef = useRef<THREE.Mesh>(null);
+  const starTexture = useStarTexture();
+  const particleCount = 80;
+
+  const { positions, colors, radii, speeds, angles } = useMemo(() => {
+    const pos = new Float32Array(particleCount * 3);
+    const cols = new Float32Array(particleCount * 3);
+    const rads = new Float32Array(particleCount);
+    const spds = new Float32Array(particleCount);
+    const angs = new Float32Array(particleCount);
+
+    for (let i = 0; i < particleCount; i++) {
+      const r = 0.2 + Math.random() * 1.0;
+      const angle = Math.random() * Math.PI * 2;
+      const y = (Math.random() - 0.5) * 0.3;
+      pos[i * 3] = Math.cos(angle) * r;
+      pos[i * 3 + 1] = y;
+      pos[i * 3 + 2] = Math.sin(angle) * r;
+      rads[i] = r;
+      spds[i] = 0.6 + Math.random() * 1.2;
+      angs[i] = angle;
+      const c = new THREE.Color();
+      c.setHSL(0.52 + Math.random() * 0.08, 0.8, 0.5 + Math.random() * 0.4);
+      cols[i * 3] = c.r;
+      cols[i * 3 + 1] = c.g;
+      cols[i * 3 + 2] = c.b;
+    }
+    return { positions: pos, colors: cols, radii: rads, speeds: spds, angles: angs };
+  }, []);
+
+  useFrame(({ clock }, delta) => {
+    if (!particlesRef.current) return;
+    const posAttr = particlesRef.current.geometry.attributes.position;
+    const posArray = posAttr.array as Float32Array;
+
+    for (let i = 0; i < particleCount; i++) {
+      angles[i] += speeds[i] * delta * 1.2;
+      // Flow toward center then reset
+      let r = radii[i] - delta * 0.08;
+      if (r < 0.05) r = 0.8 + Math.random() * 0.4;
+      radii[i] = r;
+      const y = (Math.random() - 0.5) * 0.2 * (r / 1.2);
+      posArray[i * 3] = Math.cos(angles[i]) * r;
+      posArray[i * 3 + 1] = y;
+      posArray[i * 3 + 2] = Math.sin(angles[i]) * r;
+    }
+    posAttr.needsUpdate = true;
+
+    if (outerRingRef.current) {
+      outerRingRef.current.rotation.z += delta * 0.3;
+      outerRingRef.current.rotation.x += delta * 0.15;
+    }
+
+    // Orbit around center
+    if (groupRef.current) {
+      const t = clock.elapsedTime * 0.15;
+      groupRef.current.position.x = Math.cos(t) * 2.2;
+      groupRef.current.position.y = Math.sin(t * 0.7) * 0.5;
+      groupRef.current.position.z = Math.sin(t) * 1.5;
+    }
+  });
+
+  return (
+    <group ref={groupRef}>
+      {/* Outer ring — bright cyan */}
+      <mesh ref={outerRingRef} rotation={[Math.PI / 2.5, 0.3, 0]}>
+        <torusGeometry args={[0.55, 0.02, 16, 80]} />
+        <meshBasicMaterial
+          color="#22d3ee"
+          transparent
+          opacity={0.5}
+          blending={THREE.AdditiveBlending}
+          depthWrite={false}
+        />
+      </mesh>
+
+      {/* Inner ring — magenta */}
+      <mesh rotation={[Math.PI / 2, 0, 0]}>
+        <torusGeometry args={[0.15, 0.012, 16, 64]} />
+        <meshBasicMaterial
+          color="#a855f7"
+          transparent
+          opacity={0.6}
+          blending={THREE.AdditiveBlending}
+          depthWrite={false}
+        />
+      </mesh>
+
+      {/* Swirling particles */}
+      <points ref={particlesRef}>
+        <bufferGeometry>
+          <bufferAttribute attach="attributes-position" args={[positions, 3]} />
+          <bufferAttribute attach="attributes-color" args={[colors, 3]} />
+        </bufferGeometry>
+        <pointsMaterial
+          size={0.04}
+          vertexColors
+          map={starTexture}
+          sizeAttenuation
+          transparent
+          opacity={0.75}
+          blending={THREE.AdditiveBlending}
+          depthWrite={false}
+        />
+      </points>
+    </group>
+  );
+}
+
+/* ------------------------------------------------------------------ */
 /*  Draggable wireframe planet                                         */
 /* ------------------------------------------------------------------ */
 function Planet() {
@@ -700,7 +884,7 @@ export default function UniverseScene() {
 
   return (
     <Canvas
-      style={{ position: "absolute", inset: 0 }}
+      style={{ position: "absolute", inset: 0, filter: isLight ? "invert(1)" : "none" }}
       camera={{ position: [0, 0, 5], fov: 55 }}
       dpr={[1, 1.25]}
       gl={{
@@ -710,21 +894,20 @@ export default function UniverseScene() {
       }}
     >
       <AdaptiveDpr pixelated />
+      <color attach="background" args={["#080C28"]} />
 
-      {/* Dark mode scene */}
-      <group visible={!isLight}>
-        <color attach="background" args={["#080C28"]} />
-
-        {/* Invisible click catcher */}
-        <mesh onClick={handleClick} position={[0, 0, -0.5]}>
-          <planeGeometry args={[20, 12]} />
-          <meshBasicMaterial transparent opacity={0} depthWrite={false}
+      {/* Invisible click catcher */}
+      <mesh onClick={handleClick} position={[0, 0, -0.5]}>
+        <planeGeometry args={[20, 12]} />
+        <meshBasicMaterial transparent opacity={0} depthWrite={false}
           depthTest={false}
         />
       </mesh>
 
       <MultiLayerStarfield />
       <OrbitalRings />
+      <Wormhole />
+      <Satellites />
       <CentralShape />
       <Planet />
       <ShootingStars />
@@ -740,12 +923,6 @@ export default function UniverseScene() {
           resolutionScale={0.5}
         />
       </EffectComposer>
-      </group>
-
-      {/* Light mode scene */}
-      <group visible={isLight}>
-        <LightModeScene />
-      </group>
     </Canvas>
   );
 }

@@ -53,7 +53,7 @@ export default function Navigation({ siteTitle, navItems }: NavigationProps) {
       className={cn(
         "fixed top-0 z-50 w-full border-b transition-all duration-300",
         isScrolled
-          ? "border-[var(--border-color)] bg-[var(--bg-primary)]/80 backdrop-blur-xl"
+          ? "border-[var(--border-color)] bg-[var(--glass-bg)] backdrop-blur-xl"
           : "border-transparent bg-transparent"
       )}
     >
@@ -96,7 +96,7 @@ export default function Navigation({ siteTitle, navItems }: NavigationProps) {
       </nav>
 
       {mobileOpen && (
-        <div className="border-t border-[var(--border-color)] bg-[var(--bg-primary)]/95 backdrop-blur-xl md:hidden">
+        <div className="border-t border-[var(--border-color)] bg-[var(--glass-bg)] backdrop-blur-xl md:hidden">
           <div className="flex flex-col gap-1 px-6 py-4">
             {navItems?.map((item) => (
               <a
